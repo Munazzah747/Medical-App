@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\Doctor;
+use App\Models\Specialization;
 
 class SpecializationController extends Controller
 {
@@ -14,7 +17,8 @@ class SpecializationController extends Controller
      */
     public function index()
     {
-        //
+         $specializations = Specialization::all();
+        return view('Admin_Dashboard.Doctor_specialization.index', compact('specializations'));
     }
 
     /**
@@ -24,7 +28,7 @@ class SpecializationController extends Controller
      */
     public function create()
     {
-        //
+       return view('Admin_Dashboard.Doctor_specialization.form');
     }
 
     /**
@@ -35,7 +39,19 @@ class SpecializationController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:specializations,name'
+        ]);
+
+        Specialization::create([
+            'name' => $request->name
+        ]);
+
+        return redirect()->route('specializations.index')
+            ->with('success', 'Specialization created successfully');
+    }
+
     }
 
     /**
@@ -67,9 +83,20 @@ class SpecializationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Specialization $specialization)
     {
-        //
+        {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:specializations,name,' . $specialization->id
+        ]);
+
+        $specialization->update([
+            'name' => $request->name
+        ]);
+
+        return redirect()->route('specializations.index')
+            ->with('success', 'Specialization updated successfully');
+    }
     }
 
     /**
@@ -78,8 +105,11 @@ class SpecializationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Specialization $specialization)
     {
-        //
+        $specialization->delete();
+
+        return redirect()->route('specializations.index')
+            ->with('success', 'Specialization deleted successfully');
     }
 }

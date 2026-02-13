@@ -11,35 +11,7 @@ use Illuminate\Support\Facades\Hash;
 
 class DoctorController extends Controller
 {
-//     public function create()
-// {
-//     return view('Admin_Dashboard.Doctor.create');
-// }
-   
 
-//    public function store(Request $request)
-// {
-//     $request->validate([
-//         'name'     => 'required|string|max:255',
-//         'email'    => 'required|email|unique:users,email',
-//         'password' => 'required|min:6',
-//         'role'     => 'required|exists:roles,name',
-//     ]);
-
-//     $user = User::create([
-//         'name'      => $request->name,
-//         'email'     => $request->email,
-//         'password'  => Hash::make($request->password),
-//         'is_active' => true,
-//     ]);
-
-//     // Assign selected role
-//     $user->assignRole($request->role);
-
-//     return redirect()
-//         ->route('admin.doctors.create')
-//         ->with('success', 'User created successfully with role assigned.');
-// }
 
 public function index()
     {
@@ -68,8 +40,64 @@ public function index()
         // attach specializations
         $doctor->specializations()->sync($request->specializations);
 
-        return redirect()->route('admin.Doctor_Management.index')
+        return redirect()->route('admin.doctor.index')
             ->with('success','Doctor created successfully');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $doctor = Doctor::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'specializations' => 'nullable|array',
+            'specializations.*' => 'exists:specializations,id',
+        ]);
+
+        // Update doctor basic info
+        $doctor->update([
+            'name'  => $request->name,
+            'email' => $request->email,
+        ]);
+
+        // MANY-TO-MANY (pivot table)
+        $doctor->specializations()->sync(
+            $request->specializations ?? []
+        );
+
+        return redirect()->back()
+            ->with('success', 'Doctor updated successfully');
+    }
+
+    /**
+     * Toggle doctor active / inactive
+     */
+    public function status($id)
+    {
+        $doctor = Doctor::findOrFail($id);
+
+        $doctor->is_active = ! $doctor->is_active;
+        $doctor->save();
+
+        return redirect()->back()
+            ->with('success', 'Doctor status updated');
+    }
+
+    /**
+     * Delete doctor
+     */
+    public function destroy($id)
+    {
+        $doctor = Doctor::findOrFail($id);
+
+        // detach pivot data first (safe practice)
+        $doctor->specializations()->detach();
+
+        $doctor->delete();
+
+        return redirect()->back()
+            ->with('success', 'Doctor deleted successfully');
     }
 }
 
